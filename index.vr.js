@@ -5,6 +5,7 @@ import {
   Pano,
   Text,
   View,
+  Plane
 } from 'react-vr';
 
 export default class ReactVrTest extends React.Component {
@@ -12,7 +13,11 @@ export default class ReactVrTest extends React.Component {
     return (
       <View>
         <Pano source={asset('chess-world.jpg')}/>
-        <Text
+        <Plane dimWidth={2} dimHeight={1} texture={asset('chess-world.jpg')} style={{
+          transform: [{translate: [0, 0, -2]}]
+        }}/>
+
+        {/* <Text
           style={{
             backgroundColor: '#777879',
             fontSize: 0.8,
@@ -25,7 +30,7 @@ export default class ReactVrTest extends React.Component {
             transform: [{translate: [0, 0, -3]}],
           }}>
           hello
-        </Text>
+        </Text> */}
       </View>
     );
   }
