@@ -17,15 +17,18 @@ export default class ReactVrTest extends React.Component {
 
 
         <Plane dimWidth={2} dimHeight={1}
-          texture={asset('chess-world.jpg')}
+          uniforms={{'texMask': {'value': asset('chess-world-dummy-mask.jpg')}}}
+          texture={asset('chess-world-dummy-mask.jpg')}
           materialParameters={{
              fragmentShader: '\
              uniform sampler2D   tex0;\
+             uniform sampler2D   texMask;\
              varying vec2  vUv;\
 \
              void main()	{\
-               vec4 color = texture2D( tex0, vUv + vec2(0.0,0.0));\
-               gl_FragColor = vec4(vec3(color), 0.8);\
+               vec4 color = texture2D(tex0, vUv);\
+               vec4 maskClr = texture2D( texMask, vUv);\
+               gl_FragColor = vec4(0.5,0,0,1.0)+color;\
              }\
              ',
              vertexShader: '    varying vec2 vUv;\
