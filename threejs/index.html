@@ -6,6 +6,29 @@
   </head>
   <body>
 
+    <script type="x-shader/x-vertex" id="vertexShaderSource">
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentShaderSource">
+        varying vec2 vUv;
+        uniform vec3 color;
+        uniform sampler2D texColor;
+        uniform sampler2D texMask;
+        uniform float maskOffsetX;
+
+        void main() {
+          vec4 clr = texture2D( texColor, vUv );
+          vec4 alpha = texture2D( texMask, vUv+vec2(maskOffsetX,0.0) );
+          gl_FragColor = vec4(color * clr.rgb, alpha.r);
+        }
+    </script>
+
     <canvas id="canvas"></canvas>
 
     <h3>Room</h3>
