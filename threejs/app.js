@@ -19,7 +19,8 @@ class Submodule {
     this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
 
     this.material = new THREE.MeshStandardMaterial( {
-      color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
+      //color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
+      color: new THREE.Color(1,1,1),
       roughness: 0.5,
       metalness: 0,
       flatShading: true
@@ -45,8 +46,12 @@ class Submodule {
 }
 
 class Room {
-  constructor(el){
+  constructor(el, maskTexture){
     this.el = el;
+    this.maskTexture = maskTexture;
+    if(this.maskTexture === undefined)
+      this.maskTexture = new THREE.TextureLoader().load( '../static_assets/barmask.jpg' );
+
     this.layerMeshes = [];
     this.isUserInteracting = false;
 
@@ -133,7 +138,7 @@ class Room {
       color: { value: color },
       maskOffsetX: {value: maskOffsetX},
       texColor: {value: new THREE.TextureLoader().load( '../static_assets/chess-world.jpg' )},
-      texMask: {value: new THREE.TextureLoader().load( '../static_assets/barmask.jpg' )}
+      texMask: {value: this.maskTexture}
     };
 
     uniforms.texColor.value.wrapS = uniforms.texColor.value.wrapT = THREE.RepeatWrapping;
@@ -227,20 +232,20 @@ class Room {
 
 class App {
   constructor() {
-    this.room = new Room(document.getElementById( 'room' ));
+    this.canvas = document.getElementById( 'canvas' );
+    this.renderTarget = new THREE.WebGLRenderTarget( 1024, 512, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
+
+    this.room = new Room(document.getElementById( 'room' ), this.renderTarget.texture);
     this.submodule = new Submodule(document.getElementById( 'texture' ));
     this.submodules = [this.room, this.submodule];
 
-    this.canvas = document.getElementById( 'canvas' );
-
-    this._setup();
-    this._tick();
-  }
-
-  _setup() {
     this.renderer = new THREE.WebGLRenderer( { canvas: this.canvas, antialias: true } );
     this.renderer.setClearColor( 0xffffff, 1 );
     this.renderer.setPixelRatio( window.devicePixelRatio );
+
+
+
+    this._tick();
   }
 
   _update() {
@@ -249,16 +254,25 @@ class App {
   }
 
   _render() {
-    this.renderer.setClearColor( 0xffffff );
+    this.renderer.setClearColor( 0xaaaaaa );
     this.renderer.setScissorTest( false );
     this.renderer.clear();
 
-    this.renderer.setClearColor( 0xe0e0e0 );
+    this._renderTexture();
+
+    this.renderer.setClearColor( 0x000000 );
     this.renderer.setScissorTest( true );
 
     this.submodules.forEach((submodule) => {
       this._renderModule(submodule.el, submodule.scene, submodule.camera);
     });
+  }
+
+  _renderTexture() {
+    this.renderer.setClearColor( 0x000000 );
+    // this.renderer.clear();
+    this.renderer.setViewport( 0, 0, this.renderTarget.width, this.renderTarget.height );
+    this.renderer.render(this.submodule.scene, this.submodule.camera, this.renderTarget, true );
   }
 
   _renderModule(el, scene, camera){

@@ -43,6 +43,11 @@ canvas {
   background:#aaa;
 }
 
+.subcanvas#texture {
+  width: 600px;
+  height: 300px;
+}
+
 h3 {
   margin: 0 10px;
   color: #aaa;
