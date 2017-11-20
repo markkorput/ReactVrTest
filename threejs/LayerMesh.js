@@ -18,7 +18,12 @@ export default class LayerMesh {
     this.materials = [mat0];
 
     layers.forEach((layer) => {
-      var mat = this._getLayerMaterial(layer.tex, layer.mask, layer.color);
+      var mat;
+      if(layer.mask)
+        mat = this._getLayerMaterial(layer.tex, layer.mask, layer.color);
+      else
+        mat = new THREE.MeshBasicMaterial({map: layer.tex});
+
       this.materials.push(mat);
     });
 

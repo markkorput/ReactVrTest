@@ -1,13 +1,18 @@
 import Submodule from './submodule';
 import LayerMesh from './LayerMesh';
+import Layer from './Layer';
 import * as THREE from 'three';
 window.THREE = THREE;
-import FirstPersonControls from './fpcontrols'
-
+import FirstPersonControls from './fpcontrols';
 
 class App {
   constructor() {
+    this.renderWidth = window.innerWidth;
+    this.renderHeight = window.innerHeight;
+
     this.canvas = document.getElementById( 'canvas' );
+
+    this.renderTarget = new THREE.WebGLRenderTarget( 4096, 2048, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat, alpha: true } );
 
     //this.room = new Room(this.canvas, this.renderTarget.texture); // document.getElementById( 'room' ), this.renderTarget.texture);
     var tex1 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room.jpg' );
@@ -16,16 +21,12 @@ class App {
     this.layerMesh = new LayerMesh(
       tex1,
       [
-        {'tex': tex1, 'mask': tex2, 'color': new THREE.Color(1.0,0,1.0)},
-        {'tex': tex1, 'mask': tex3, 'color': new THREE.Color(1.0,1.0,0.0)}
+        {'tex': tex1, 'mask': tex3, 'color': new THREE.Color(1.0,0,1.0)},
+        // {'tex': this.renderTarget.texture, 'mask': tex2},
       ]);
 
 
-    var renderWidth = window.innerWidth;
-    var renderHeight = window.innerHeight;
-
-    this.renderTarget = new THREE.WebGLRenderTarget( 1024, 512, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
-
+    this.layer1 = new Layer();
 
     this.scene = new THREE.Scene();
     this.scene.add(this.layerMesh.mesh);
@@ -44,23 +45,29 @@ class App {
     this.camera.target = new THREE.Vector3( 0, 0, 0 );
 
     window.addEventListener( 'resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+      this.renderWidth = window.innerWidth;
+      this.renderHeight = window.innerHeight;
+
+      camera.aspect = this.renderWidth / this.renderHeight;
       camera.updateProjectionMatrix();
 
-      this.renderer.setSize( window.innerWidth, window.innerHeight, false );
+      this.renderer.setSize( this.renderWidth, this.renderHeight, false );
     }, false);
 
     this.controls = new FirstPersonControls(this.camera, this.canvas);
-    this.controls.lookSpeed = 0.2;
-    this.controls.movementSpeed = 20;
-    this.controls.noFly = true;
-    this.controls.lookVertical = true;
-    this.controls.constrainVertical = true;
-    this.controls.verticalMin = 0.0;
-    this.controls.verticalMax = 3.0;
-    this.controls.lon = -150;
-    this.controls.lat = 120;
+    this.controls.lookSpeed = 0.4;
+    this.controls.enabled = false;
+    this.controls.activeLook = true;
+    this.controls.movementSpeed = 0.0;
 
+    this.canvas.addEventListener( 'mousedown', (event) => { this.controls.enabled = true; }, false );
+    this.canvas.addEventListener( 'mouseup', (event) => { this.controls.enabled = false; }, false );
+
+    this.bRenderTexture = false;
+    window.addEventListener('keydown', (event) => {
+      // console.log(event);
+      if(event.key == '/') this.bRenderTexture = !this.bRenderTexture;
+    });
     this.clock = new THREE.Clock();
     this._tick();
   }
@@ -74,23 +81,28 @@ class App {
   _update() {
     var delta = this.clock.getDelta();
     this.controls.update(delta);
-
-    // this.submodules.forEach((submodule) => submodule.update());
   }
 
   _render() {
-    this.renderer.setClearColor( 0x777777 );
+    // // update render target texture content
+    // this.renderer.clear();
+    // this.renderer.setViewport( 0, 0, this.renderTarget.width, this.renderTarget.height );
+    // this.renderer.render(this.layer1.scene, this.camera, this.renderTarget, true );
+
+    // this.renderer.clear();
+
+
+    // this.renderer.setViewport( 0, 0, this.renderWidth, this.renderHeight );
     this.renderer.setScissorTest( false );
+    this.renderer.setClearColor( new THREE.Color(0,0,0), 1.0);
     this.renderer.clear();
 
     this.renderer.render(this.scene, this.camera);
-  }
 
-  _renderTexture() {
-    this.renderer.setClearColor( 0x000000 );
-    // this.renderer.clear();
-    this.renderer.setViewport( 0, 0, this.renderTarget.width, this.renderTarget.height );
-    this.renderer.render(this.submodule.scene, this.submodule.camera, this.renderTarget, true );
+    if(this.bRenderTexture){
+      // this.renderer.setClearColor( new THREE.Color(0,0,0), 0.0);
+      this.renderer.render(this.layer1.scene, this.camera);
+    }
   }
 }
 
