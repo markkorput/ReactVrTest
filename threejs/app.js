@@ -8,18 +8,19 @@ import FirstPersonControls from './fpcontrols'
 class App {
   constructor() {
     this.canvas = document.getElementById( 'canvas' );
+
+    //this.room = new Room(this.canvas, this.renderTarget.texture); // document.getElementById( 'room' ), this.renderTarget.texture);
+    this.room = new Room(
+      new THREE.TextureLoader().load( '../static_assets/equirectangulars/room.jpg' ),
+      new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask1.jpg' )
+      //new THREE.TextureLoader().load( '../static_assets/material.jpg' )
+    );
+
     var renderWidth = window.innerWidth;
     var renderHeight = window.innerHeight;
 
     this.renderTarget = new THREE.WebGLRenderTarget( 1024, 512, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
 
-
-    //this.room = new Room(this.canvas, this.renderTarget.texture); // document.getElementById( 'room' ), this.renderTarget.texture);
-    this.room = new Room(this.canvas,
-      new THREE.TextureLoader().load( '../static_assets/equirectangulars/room.jpg' ),
-      new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask1.jpg' )
-      //new THREE.TextureLoader().load( '../static_assets/material.jpg' )
-    );
 
     this.scene = new THREE.Scene();
     this.scene.add(this.room.mesh);
