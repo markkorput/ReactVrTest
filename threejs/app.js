@@ -1,5 +1,5 @@
 import Submodule from './submodule';
-import Room from './room';
+import LayerMesh from './LayerMesh';
 import * as THREE from 'three';
 window.THREE = THREE;
 import FirstPersonControls from './fpcontrols'
@@ -10,11 +10,16 @@ class App {
     this.canvas = document.getElementById( 'canvas' );
 
     //this.room = new Room(this.canvas, this.renderTarget.texture); // document.getElementById( 'room' ), this.renderTarget.texture);
-    this.room = new Room(
-      new THREE.TextureLoader().load( '../static_assets/equirectangulars/room.jpg' ),
-      new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask1.jpg' )
-      //new THREE.TextureLoader().load( '../static_assets/material.jpg' )
-    );
+    var tex1 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room.jpg' );
+    var tex2 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask1.jpg' );
+    var tex3 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask2.jpg' );
+    this.layerMesh = new LayerMesh(
+      tex1,
+      [
+        {'tex': tex1, 'mask': tex2, 'color': new THREE.Color(1.0,0,1.0)},
+        {'tex': tex1, 'mask': tex3, 'color': new THREE.Color(1.0,1.0,0.0)}
+      ]);
+
 
     var renderWidth = window.innerWidth;
     var renderHeight = window.innerHeight;
@@ -23,7 +28,8 @@ class App {
 
 
     this.scene = new THREE.Scene();
-    this.scene.add(this.room.mesh);
+    this.scene.add(this.layerMesh.mesh);
+
 
     // this.submodule = new Submodule(document.getElementById( 'texture' ));
     // this.mask = new Mask(document.getElementById( 'mask' ));
@@ -31,6 +37,7 @@ class App {
     // this.submodules = [this.room, this.submodule, this.mask];
 
     this.renderer = new THREE.WebGLRenderer( { canvas: this.canvas, antialias: true } );
+    this.renderer.context.disable(this.renderer.context.DEPTH_TEST); // <-- solved flickering because of material conflicts
 
     let rect = this.canvas.getBoundingClientRect();
     this.camera = new THREE.PerspectiveCamera( 75, (rect.right-rect.left) / (rect.bottom-rect.top), 1, 1100 );

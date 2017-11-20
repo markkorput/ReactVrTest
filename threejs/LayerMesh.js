@@ -1,23 +1,32 @@
 import * as THREE from 'three';
 
-export default class Room {
-  constructor(baseTexture, maskTexture, materialTexture){
+export default class LayerMesh {
+  constructor(baseTexture, layers = []){
 
     // textures
 
     this.baseTexture = baseTexture;
-    this.maskTexture = maskTexture;
-    this.materialTexture = materialTexture;
-
-    this.baseMaterial = new THREE.MeshBasicMaterial({
-          map: this.baseTexture
-    });
 
     // materials
 
-    this.mat1 = this._getLayerMaterial(this.baseTexture, this.maskTexture, new THREE.Color(1,0,0), 0.0);
 
-    this.materials = [this.baseMaterial, this.mat1];
+    // base material; simple static texture
+    var mat0 = new THREE.MeshBasicMaterial({
+          map: this.baseTexture
+    });
+
+    this.materials = [mat0];
+
+    layers.forEach((layer) => {
+      var mat = this._getLayerMaterial(layer.tex, layer.mask, layer.color);
+      this.materials.push(mat);
+    });
+
+    // var mat1 = this._getLayerMaterial(this.baseTexture, this.maskTexture, new THREE.Color(1,0,0), 0.0);
+    // mat1.blending = THREE.CustomBlending;
+    // mat1.blendEquation = THREE.AddEquation;
+
+    //this.materials = [mat0, mat1, mat2];
 
     // geometry
 
@@ -37,20 +46,15 @@ export default class Room {
     this.mesh = new THREE.Mesh( this.geometry, this.materials );
   }
 
-  _getBaseMesh(tex){
-    var material = new THREE.MeshBasicMaterial({
-      map: tex,
-      color: new THREE.Color(1,0,0)
-    });
+  _getLayerMaterial(colorTexture, maskTexture, color){
+    if(!color){
+      console.log('default color')  ;
+      color = new THREE.Color(1,1,1);
+    }
 
-    var mesh = new THREE.Mesh( this.geometry, material );
-    return mesh;
-  }
-
-  _getLayerMaterial(colorTexture, maskTexture, color, maskOffsetX){
     var uniforms = {
       color: { value: color },
-      maskOffsetX: {value: maskOffsetX},
+      maskOffsetX: {value: 0.0},
       texColor: {value: colorTexture},
       texMask: {value: maskTexture}
     };
