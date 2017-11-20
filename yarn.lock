@@ -4493,9 +4493,8 @@ three-gltf2-loader@^1.0.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/three-gltf2-loader/-/three-gltf2-loader-1.2.0.tgz#1fffae0659b1490034e6d055c7aabc439ab5de21"
 
-three.cubemap-to-equirectangular@~1.1.2:
+"three.cubemap-to-equirectangular@file:../THREE.CubemapToEquirectangular":
   version "1.1.2"
-  resolved "https://registry.yarnpkg.com/three.cubemap-to-equirectangular/-/three.cubemap-to-equirectangular-1.1.2.tgz#4be0d4ec24ed9eb73573f7a69f26ea676ea96755"
 
 three@^0.87.0:
   version "0.87.1"

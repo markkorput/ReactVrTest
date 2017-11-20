@@ -148,7 +148,7 @@ class App {
 
     // render layer1 scene to renderTarget (will be used as texture in main 'scene')
     this.renderer.render(this.layer1.scene, this.camera, this.renderTarget, true );
-    this.equiUpdate(false);
+    // this.equiUpdate(false);
 
     // render main scene
     this.renderer.render(this.scene, this.camera);
