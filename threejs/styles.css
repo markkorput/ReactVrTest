@@ -48,6 +48,11 @@ canvas {
   height: 300px;
 }
 
+.subcanvas#mask {
+  width: 600px;
+  height: 300px;
+}
+
 h3 {
   margin: 0 10px;
   color: #aaa;
