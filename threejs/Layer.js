@@ -18,7 +18,7 @@ export default class Layer {
 
     this.mesh.scale.x = 2;
     this.mesh.scale.y = 5;
-    this.mesh.scale.z = 1;
+    this.mesh.scale.z = 4;
 
     this.scene = new THREE.Scene();
     this.scene.add(this.mesh);

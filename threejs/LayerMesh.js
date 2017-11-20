@@ -53,7 +53,6 @@ export default class LayerMesh {
 
   _getLayerMaterial(colorTexture, maskTexture, color){
     if(!color){
-      console.log('default color')  ;
       color = new THREE.Color(1,1,1);
     }
 
