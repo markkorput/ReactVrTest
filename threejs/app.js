@@ -22,7 +22,7 @@ class App {
       tex1,
       [
         {'tex': tex1, 'mask': tex3, 'color': new THREE.Color(1.0,0,1.0)},
-        // {'tex': this.renderTarget.texture, 'mask': tex2},
+        {'tex': this.renderTarget.texture, 'mask': tex2}
       ]);
 
 
@@ -85,22 +85,17 @@ class App {
 
   _render() {
     // // update render target texture content
-    // this.renderer.clear();
-    // this.renderer.setViewport( 0, 0, this.renderTarget.width, this.renderTarget.height );
-    // this.renderer.render(this.layer1.scene, this.camera, this.renderTarget, true );
-
-    // this.renderer.clear();
-
-
-    // this.renderer.setViewport( 0, 0, this.renderWidth, this.renderHeight );
-    this.renderer.setScissorTest( false );
-    this.renderer.setClearColor( new THREE.Color(0,0,0), 1.0);
     this.renderer.clear();
+    this.renderer.setClearColor( new THREE.Color(255,0,0)); // RED as warning because we shouldn't have any clear pixels
 
+    // render layer1 scene to renderTarget (will be used as texture in main 'scene')
+    this.renderer.render(this.layer1.scene, this.camera, this.renderTarget, true );
+
+    // render main scene
     this.renderer.render(this.scene, this.camera);
 
+    // render layer1 scene if enabled (for reference)
     if(this.bRenderTexture){
-      // this.renderer.setClearColor( new THREE.Color(0,0,0), 0.0);
       this.renderer.render(this.layer1.scene, this.camera);
     }
   }
