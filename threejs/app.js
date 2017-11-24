@@ -1,75 +1,128 @@
 import Submodule from './submodule';
-import Room from './room';
+import LayerMesh from './LayerMesh';
+import Layer from './Layer';
 import * as THREE from 'three';
-import ThreeOrbitControls from 'three-orbit-controls';
-let OrbitControls = ThreeOrbitControls(THREE);
-//THREE.OrbitControls = OrbitControls;
-
+window.THREE = THREE;
+import FirstPersonControls from './fpcontrols';
+// this.THREE = THREE
+import CubemapToEquirectangular from 'three.cubemap-to-equirectangular';
 
 class App {
   constructor() {
-    this.canvas = document.getElementById( 'canvas' );
-    this.renderTarget = new THREE.WebGLRenderTarget( 1024, 512, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
+    this.renderWidth = window.innerWidth;
+    this.renderHeight = window.innerHeight;
 
-    this.room = new Room(document.getElementById( 'room' ), this.renderTarget.texture);
-    this.submodule = new Submodule(document.getElementById( 'texture' ));
-    this.submodules = [this.room, this.submodule];
+    this.canvas = document.getElementById( 'canvas' );
+
+    this.layer1 = new Layer();
+
+    // renderer
 
     this.renderer = new THREE.WebGLRenderer( { canvas: this.canvas, antialias: true } );
-    this.renderer.setClearColor( 0xffffff, 1 );
-    this.renderer.setPixelRatio( window.devicePixelRatio );
+    this.renderer.context.disable(this.renderer.context.DEPTH_TEST); // <-- solved flickering because of material conflicts
 
+    // camera
 
+    let rect = this.canvas.getBoundingClientRect();
+    this.camera = new THREE.PerspectiveCamera( 75, (rect.right-rect.left) / (rect.bottom-rect.top), 1, 1100 );
+    this.camera.target = new THREE.Vector3( 0, 0, 0 );
 
+    window.addEventListener('resize', () => this.onWindowResize, false);
+    this.onWindowResize();
+
+    // equirectangular renderer
+
+    this.equi = new CubemapToEquirectangular(this.renderer, true /* unmanaged */);
+    // this.equi.setSize( 4096, 2048 );
+    // this.equi.cubeCamera = new THREE.CubeCamera( .1, 1000, 4096 );
+
+    this.equiUpdate = (download) => {
+      var autoClear = this.equi.renderer.autoClear;
+      this.equi.renderer.autoClear = true;
+      this.equi.cubeCamera.position.copy( this.camera.position );
+      this.equi.cubeCamera.update( this.renderer, this.layer1.scene );
+      this.equi.renderer.autoClear = autoClear;
+      return this.equi.convert(this.equi.cubeCamera, download);
+    };
+
+    window.addEventListener('keydown', (event) => {
+      // console.log(event);
+      if(event.key == 'u'){
+        this.equiUpdate(false);
+      }
+
+      if(event.key == 'd'){
+        this.equiUpdate(true);
+      }
+
+      if(event.key == 'c'){
+        this._setupLayerMesh();
+      }
+    });
+
+    // framebuffer renderer
+
+    this.renderTarget = new THREE.WebGLRenderTarget( 4096, 2048, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBFormat,
+      alpha: true } );
+
+    // objects, materials, textures
+
+    // scene
+    this.scene = new THREE.Scene();
+    this._setupLayerMesh();
+
+    // camera controls
+
+    this.controls = new FirstPersonControls(this.camera, this.canvas);
+    this.controls.lookSpeed = 0.4;
+    this.controls.enabled = false;
+    this.controls.activeLook = true;
+    this.controls.movementSpeed = 0.0;
+
+    this.canvas.addEventListener( 'mousedown', (event) => { this.controls.enabled = true; }, false );
+    this.canvas.addEventListener( 'mouseup', (event) => { this.controls.enabled = false; }, false );
+
+    // app config
+
+    this.bRenderTexture = false;
+    window.addEventListener('keydown', (event) => {
+      // console.log(event);
+      if(event.key == '/') this.bRenderTexture = !this.bRenderTexture;
+    });
+
+    this.clock = new THREE.Clock();
     this._tick();
   }
 
-  _update() {
-    this._updateSize();
-    this.submodules.forEach((submodule) => submodule.update());
-  }
+  _setupLayerMesh() {
+    if(this.layerMesh)
+      this.scene.remove(this.layerMesh.mesh);
 
-  _render() {
-    this.renderer.setClearColor( 0xaaaaaa );
-    this.renderer.setScissorTest( false );
-    this.renderer.clear();
+    this.equiUpdate(false);
+    this.layerMesh = new LayerMesh(
+      new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_06.jpg' ),
+      // this.tex1,
+      // this.equi.cubeCamera.renderTarget.texture,
+      [
+        { 'tex': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_10.jpg' ),
+          'mask': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_06_mask1.jpg' )
+        },
+        { 'tex': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_11.jpg' ),
+          'mask': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_06_mask2.jpg' )
+        }
+        // },
+        // {'tex': this.equi.output.texture, }
+        // {'tex': this.equi.output.texture, 'mask': this.tex4},
+        // {'tex': this.tex5, 'mask': this.tex4}
+        // {'tex': this.renderTarget.texture, 'mask': this.tex4}
+        // {'tex': this.tex1, 'mask': this.tex2, 'color': new THREE.Color(0,1,1.0)},
+        // {'tex': this.tex1, 'mask': this.tex3, 'color': new THREE.Color(1.0,0,1.0)}
+      ]);
 
-    this._renderTexture();
-
-    this.renderer.setClearColor( 0x000000 );
-    this.renderer.setScissorTest( true );
-
-    this.submodules.forEach((submodule) => {
-      this._renderModule(submodule.el, submodule.scene, submodule.camera);
-    });
-  }
-
-  _renderTexture() {
-    this.renderer.setClearColor( 0x000000 );
-    // this.renderer.clear();
-    this.renderer.setViewport( 0, 0, this.renderTarget.width, this.renderTarget.height );
-    this.renderer.render(this.submodule.scene, this.submodule.camera, this.renderTarget, true );
-  }
-
-  _renderModule(el, scene, camera){
-    // get its position relative to the page's viewport
-    let rect = el.getBoundingClientRect();
-
-    // set the viewport
-    var width  = rect.right - rect.left;
-    var height = rect.bottom - rect.top;
-    var left   = rect.left;
-    var top    = rect.top;
-
-    this.renderer.setViewport( left, top, width, height );
-    this.renderer.setScissor( left, top, width, height );
-
-    //camera.aspect = width / height; // not changing in this example
-    //camera.updateProjectionMatrix();
-
-    //scene.userData.controls.update();
-
-    this.renderer.render(scene, camera);
+    this.scene.add(this.layerMesh.mesh);
   }
 
   _tick() {
@@ -78,16 +131,39 @@ class App {
     requestAnimationFrame(() => this._tick());
   }
 
-  _updateSize() {
-    let width = this.canvas.clientWidth;
-    let height = this.canvas.clientHeight;
+  _update() {
+    var delta = this.clock.getDelta();
+    this.controls.update(delta);
+  }
 
-    if ( this.canvas.width !== width || this.canvas.height != height ) {
-      this.renderer.setSize( width, height, false );
+  _render() {
+    // // update render target texture content
+    this.renderer.clear();
+    this.renderer.setClearColor( new THREE.Color(0,0,0)); // RED as warning because we shouldn't have any clear pixels
+
+    // render layer1 scene to renderTarget (will be used as texture in main 'scene')
+    this.renderer.render(this.layer1.scene, this.camera, this.renderTarget, true );
+    // this.equiUpdate(false);
+
+    // render main scene
+    this.renderer.render(this.scene, this.camera);
+
+    // render layer1 scene if enabled (for reference)
+    if(this.bRenderTexture){
+      this.renderer.render(this.layer1.scene, this.camera);
     }
   }
-}
 
+  onWindowResize(){
+    this.renderWidth = window.innerWidth;
+    this.renderHeight = window.innerHeight;
+
+    this.camera.aspect = this.renderWidth / this.renderHeight;
+    this.camera.updateProjectionMatrix();
+
+    this.renderer.setSize( this.renderWidth, this.renderHeight, false );
+  }
+}
 
 
 window.onload = () => {
