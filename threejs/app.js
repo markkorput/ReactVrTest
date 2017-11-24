@@ -27,15 +27,8 @@ class App {
     this.camera = new THREE.PerspectiveCamera( 75, (rect.right-rect.left) / (rect.bottom-rect.top), 1, 1100 );
     this.camera.target = new THREE.Vector3( 0, 0, 0 );
 
-    window.addEventListener( 'resize', () => {
-      this.renderWidth = window.innerWidth;
-      this.renderHeight = window.innerHeight;
-
-      this.camera.aspect = this.renderWidth / this.renderHeight;
-      this.camera.updateProjectionMatrix();
-
-      this.renderer.setSize( this.renderWidth, this.renderHeight, false );
-    }, false);
+    window.addEventListener('resize', () => this.onWindowResize, false);
+    this.onWindowResize();
 
     // equirectangular renderer
 
@@ -77,14 +70,6 @@ class App {
 
     // objects, materials, textures
 
-    //this.room = new Room(this.canvas, this.renderTarget.texture); // document.getElementById( 'room' ), this.renderTarget.texture);
-    this.tex1 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room.jpg' );
-    this.tex2 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask1.jpg' );
-    this.tex3 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask2.jpg' );
-    this.tex4 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/room-mask3.jpg' );
-    this.tex5 = new THREE.TextureLoader().load( '../static_assets/equirectangulars/output1.png' );
-
-
     // scene
     this.scene = new THREE.Scene();
     this._setupLayerMesh();
@@ -118,13 +103,23 @@ class App {
 
     this.equiUpdate(false);
     this.layerMesh = new LayerMesh(
-      this.tex1,
+      new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_06.jpg' ),
+      // this.tex1,
+      // this.equi.cubeCamera.renderTarget.texture,
       [
+        { 'tex': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_10.jpg' ),
+          'mask': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_06_mask1.jpg' )
+        },
+        { 'tex': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_11.jpg' ),
+          'mask': new THREE.TextureLoader().load( '../static_assets/equirectangulars/cdc_casamood_06_mask2.jpg' )
+        }
+        // },
         // {'tex': this.equi.output.texture, }
-        {'tex': this.equi.output.texture, 'mask': this.tex4}
+        // {'tex': this.equi.output.texture, 'mask': this.tex4},
         // {'tex': this.tex5, 'mask': this.tex4}
         // {'tex': this.renderTarget.texture, 'mask': this.tex4}
-        // {'tex': tex1, 'mask': tex3, 'color': new THREE.Color(1.0,0,1.0)}
+        // {'tex': this.tex1, 'mask': this.tex2, 'color': new THREE.Color(0,1,1.0)},
+        // {'tex': this.tex1, 'mask': this.tex3, 'color': new THREE.Color(1.0,0,1.0)}
       ]);
 
     this.scene.add(this.layerMesh.mesh);
@@ -157,6 +152,16 @@ class App {
     if(this.bRenderTexture){
       this.renderer.render(this.layer1.scene, this.camera);
     }
+  }
+
+  onWindowResize(){
+    this.renderWidth = window.innerWidth;
+    this.renderHeight = window.innerHeight;
+
+    this.camera.aspect = this.renderWidth / this.renderHeight;
+    this.camera.updateProjectionMatrix();
+
+    this.renderer.setSize( this.renderWidth, this.renderHeight, false );
   }
 }
 
