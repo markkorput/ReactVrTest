@@ -6,6 +6,7 @@ window.THREE = THREE;
 import FirstPersonControls from './fpcontrols';
 // this.THREE = THREE
 import CubemapToEquirectangular from 'three.cubemap-to-equirectangular';
+import RemoteControl from './RemoteControl';
 
 class App {
   constructor() {
@@ -15,6 +16,7 @@ class App {
     this.canvas = document.getElementById( 'canvas' );
 
     this.layer1 = new Layer();
+    this.remote = new RemoteControl();
 
     // renderer
 
